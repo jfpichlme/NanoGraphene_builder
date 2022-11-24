@@ -626,10 +626,3 @@ class Creator:
 
         plt.close()
 
-
-test = Creator(20, max_number_conn=4)
-test.set_up_grid()
-
-test.create_graphene_structure()
-
-test.create_save_nanographenes()
