@@ -3,7 +3,7 @@ The implemented class allows to build, plot, and save Nanographene structures wh
 Thus, the resulting geometries are not optimized and just follow from geometrical reasoning. Additionally, unpaired electrons are paired with hydrogen atoms. 
 Each structure that is created is only created once during the respective run. Since it is based on a random walk approach, the created structures may vary between different runs. 
 
-# Scalliing 
+# Scalling 
 Currently, no parallelization is employed and the code was not designed to create structures with more than 10 Benzol rings. The most costly part currently is, 
 to check if the resulting nanographene has already been created during this run. This needs to take rotational and translated versions of each one into account. 
 
