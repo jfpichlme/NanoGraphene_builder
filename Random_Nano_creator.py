@@ -543,6 +543,9 @@ class Creator:
         # counter for saving the molecules
         count = 0
 
+        # array containing all the metrics
+        metric_array = []
+
         # function that builds and saves the nanographenes in a folder with the current time in xyz formate
         for conn in range(8, self.max_number_conon):
 
@@ -553,12 +556,7 @@ class Creator:
             else:
                 structs = self.perform_random_walk_straight(conn)
 
-            print("All structures are created fro ", conn, " connections")
-
-
-            # Next layer of filtering is to create a metric, that if a
-
-
+            print("All structures are created for ", conn, " connections")
 
 
             for struct in structs:
