@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 import random
@@ -9,10 +8,9 @@ import networkx as nx
 from sklearn.neighbors import NearestNeighbors
 
 
-# from openbabel import pybel
-
 class Creator:
-    '''Class that randamly builds Nanographene structures. The user inserts the max number of rings that '''
+    '''Class that randamly builds Nanographene structures. The user inserts the max number of rings that should be
+        included in the structures'''
 
     def __init__(self, nr_rings, max_number_conn, hydrogenise=True, grid_size=20):
 
@@ -526,17 +524,27 @@ class Creator:
         # get current working directory
         my_path = os.path.dirname(__file__)
         save_dir = os.path.join(my_path, self.fold_date)
-        pic_dir = os.path.join(save_dir, "draws")
+        pic_dir = os.path.join(save_dir, self.fold_date + "_draws")
 
         # make directory in which the xyz files should be stored
         os.makedirs(save_dir)
         os.makedirs(pic_dir)
 
+        # create open shell directory
+        open_shell_dir = os.path.join(my_path, self.fold_date, "open_shell")
+        os.makedirs(open_shell_dir)
+
+        # create closed shell directory
+        closed_shell_dir = os.path.join(my_path, self.fold_date, "closed_shell")
+        os.makedirs(closed_shell_dir)
+
+
+
         # counter for saving the molecules
         count = 0
 
         # function that builds and saves the nanographenes in a folder with the current time in xyz formate
-        for conn in range(1, self.max_number_conon):
+        for conn in range(8, self.max_number_conon):
 
             # get all number of structures for this number of benzol rings
 
@@ -545,16 +553,67 @@ class Creator:
             else:
                 structs = self.perform_random_walk_straight(conn)
 
-            for struct in structs:
+            print("All structures are created fro ", conn, " connections")
 
+
+            # Next layer of filtering is to create a metric, that if a
+
+
+
+
+            for struct in structs:
                 # derive the carbon and hydrogen positions
                 carbon_positions = self.get_unique_atom_position(struct)
 
                 # derive the positions of the hydrogen atoms based on the coordinates of the carbons
                 hydrogen_positions = self.get_unique_hydrogen_positions(carbon_positions)
 
+                # directory checking for even or odd number of electrons
+                if len(hydrogen_positions) % 2 != 0:
+                    # open shell calculations are defined by an uneven number of electrons
+                    save_dir = os.path.join(my_path, self.fold_date, "open_shell")
+                else:
+                    # closed shell calculations are defined by an even number of electrons
+                    save_dir = os.path.join(my_path, self.fold_date, "closed_shell")
+
+                # create out direcotory containing the geometry in and xyz file
+                final_save_dir = os.path.join(save_dir, 'C' + str(len(carbon_positions)) + '_H' +
+                                              str(len(hydrogen_positions)))
+
+                # get name of picture that needs to be saved
+                pic_name = "geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions))
+
+                # check if the direcotry has alrady been created for another system
+                identify = 0
+                flag = False
+
+
+                # check if path really exists
+                if os.path.isdir(final_save_dir):
+
+                    # the directory already exists so we need to increase the counter
+                    flag = True
+
+                    while flag == True:
+                        # create count
+                        identify = identify + 1
+                        final_save_dir = os.path.join(save_dir, 'C' + str(len(carbon_positions)) + '_H' +
+                                                      str(len(hydrogen_positions)) + "_" + str(identify))
+
+                        pic_name = "geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)) \
+                                   + "_" + str(identify)
+
+
+                        if os.path.isdir(final_save_dir):
+                            flag = True
+                        else:
+                            flag = False
+
+                # create specific molecule direcotry
+                os.mkdir(final_save_dir)
+
                 # create out path
-                out_path = os.path.join(save_dir, 'geometry' + str(count) + '.xyz')
+                out_path = os.path.join(final_save_dir, 'geometry.xyz')
 
                 with open(out_path, 'w') as geo_file:
 
@@ -575,16 +634,18 @@ class Creator:
 
                         geo_file.write(line)
 
-                # get name of picture that needs to be saved
-                pic_name = "geometry" + str(count)
-
                 self.plot_save_nanographenes(carbon_positions, pic_name, pic_dir)
 
                 # close file
                 geo_file.close()
+
+                # turn xyz file into in file
+                self.transform_xyz_in(final_save_dir)
+
                 count = count + 1
 
-    def plot_save_nanographenes(self, carbon_positions, pic_name, pic_dir):
+    @staticmethod
+    def plot_save_nanographenes(carbon_positions, pic_name, pic_dir):
         # Function that plots the benzol rings (carbon atoms) and saves the plot
 
         carbon_positions2D = np.delete(carbon_positions, -1, axis=1)
@@ -625,11 +686,3 @@ class Creator:
         plt.savefig(os.path.join(pic_dir, (pic_name + ".png")), format="png")
 
         plt.close()
-
-
-test = Creator(20, max_number_conn=4)
-test.set_up_grid()
-
-test.create_graphene_structure()
-
-test.create_save_nanographenes()
