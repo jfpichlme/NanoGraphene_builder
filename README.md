@@ -21,6 +21,6 @@ When running, the script will automatically create a new folder with the current
 In it, the geometry xyz and in files will be stored. The plots of the rings will be stored in the subfolder draws.
 Additionally, the structures are stored in two different directories, open shell and closed shell. 
 
-#Warning
+# Warning
 There is no guarantee for completeness. This is just a sampling approach for quickly creating a large number of nanographene structures with no intend 
 to include all for the specific amount of carbon atoms. 
