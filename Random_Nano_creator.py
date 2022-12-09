@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import random
 import os
@@ -605,10 +607,10 @@ class Creator:
         closed_shell_dir = os.path.join(my_path, self.fold_date, "closed_shell")
         os.makedirs(closed_shell_dir)
 
-
-
         # counter for saving the molecules
         count = 0
+
+        metric_array = []
 
         # function that builds and saves the nanographenes in a folder with the current time in xyz formate
         for conn in range(1, self.max_number_conon):
@@ -621,7 +623,6 @@ class Creator:
                 structs = self.perform_random_walk_straight(conn)
 
             print("All structures are created for ", conn, " connections")
-
 
             for struct in structs:
                 # derive the carbon and hydrogen positions
@@ -636,14 +637,20 @@ class Creator:
                 for c1 in carbon_positions:
 
                     for c2 in carbon_positions:
-
                         # calculate the metric for the carbons
-                        metric = metric + np.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2)
+                        metric = metric + np.sqrt((c1[0] - c2[0]) ** 2 + (c1[1] - c2[1]) ** 2)
 
-                print(metric)
-                print("geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)))
+                # print(metric)
+                # print("geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)))
 
+                metric = np.round(metric/len(hydrogen_positions)**2 , 2)
 
+                if metric in metric_array:
+                    print("Duplicate found")
+                    print("geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)))
+                    continue
+                else:
+                    metric_array.append(metric)
 
                 # directory checking for even or odd number of electrons
                 if len(hydrogen_positions) % 2 != 0:
@@ -664,7 +671,6 @@ class Creator:
                 identify = 0
                 flag = False
 
-
                 # check if path really exists
                 if os.path.isdir(final_save_dir):
 
@@ -679,7 +685,6 @@ class Creator:
 
                         pic_name = "geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)) \
                                    + "_" + str(identify)
-
 
                         if os.path.isdir(final_save_dir):
                             flag = True
