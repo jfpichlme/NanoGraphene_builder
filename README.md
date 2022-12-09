@@ -4,8 +4,7 @@ Thus, the resulting geometries are not optimized and just follow from geometrica
 Each structure that is created is only created once during the respective run. Since it is based on a random walk approach, the created structures may vary between different runs. 
 
 # Scalling 
-Currently, no parallelization is employed and the code was not designed to create structures with more than 10 Benzol rings. The most costly part currently is, 
-to check if the resulting nanographene has already been created during this run. This needs to take rotational and translated versions of each one into account. 
+Currently, no parallelization is employed. However, if the grid range is kept at medium sizes and the disk space allows to save enough structures including plots, the code can create a few thousand nanographene structures in a minute on a standard cpu. 
 
 # Usage
 The code requires the following packages: 
@@ -19,4 +18,9 @@ In the main file, the number of benzol rings is defined when the class object is
 
 # Output 
 When running, the script will automatically create a new folder with the current date and time as the name. 
-In it, the geometry xyz files will be stored. The plots of the rings will be stored in the subfolder draws. 
+In it, the geometry xyz and in files will be stored. The plots of the rings will be stored in the subfolder draws.
+Additionally, the structures are stored in two different directories, open shell and closed shell. 
+
+#Warning
+There is no guarantee for completeness. This is just a sampling approach for quickly creating a large number of nanographene structures with no intend 
+to include all for the specific amount of carbon atoms. 
