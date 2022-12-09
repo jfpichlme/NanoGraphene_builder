@@ -1,16 +1,20 @@
 import numpy as np
+import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 import random
 import os
 
+import time
+
 import networkx as nx
 from sklearn.neighbors import NearestNeighbors
 
 
+# from openbabel import pybel
+
 class Creator:
-    '''Class that randamly builds Nanographene structures. The user inserts the max number of rings that should be
-        included in the structures'''
+    '''Class that randamly builds Nanographene structures. The user inserts the max number of rings that '''
 
     def __init__(self, nr_rings, max_number_conn, hydrogenise=True, grid_size=20):
 
@@ -34,6 +38,36 @@ class Creator:
 
         # create a grid object containing all the lattice points
         self.grid_object = dict_grid
+
+    @staticmethod
+    def transform_xyz_in(file_path):
+        # takes a geometry.xyz file and turns it into a geometry.in file
+
+        in_path = os.path.join(file_path, 'geometry.xyz')
+
+
+        # load data according to file_path
+        data = pd.read_csv(in_path, header=None, sep='          ', skiprows=2, engine='python')
+        # assign correct columns
+        data.columns = ['type', 'x', 'y', 'z']
+        # build up xyz file
+        out_path = os.path.join(file_path, 'geometry.in')
+
+        with open(out_path, 'w') as geo_file:
+            # first line is empty
+            geo_file.write(' ' + '\n')
+            geo_file.write('  #=======================================================' + '\n')
+            geo_file.write('  #FHI-aims file' + '\n')
+            geo_file.write('  #Created using the Automatic Nanographene Creater (ANC)' + '\n')
+            geo_file.write('  #=======================================================' + '\n')
+
+            # loop over entrys to write coordinaes and types
+            for atom, x_coord, y_coord, z_coord in zip(data['type'], data['x'], data['y'], data['z']):
+                line = '  ' + 'atom' + ' ' + str(x_coord) + ' ' + str(y_coord) + ' ' + str(z_coord) + ' ' + atom + '\n'
+                geo_file.write(line)
+
+        # close file
+        geo_file.close()
 
     def create_graphene_structure(self):
         # function that fills array with graphene coordinates
@@ -114,7 +148,10 @@ class Creator:
         # array containing the differences from the starting position
         diff_array = []
 
-        for trial in range(nr_conn ** 5):
+        for trial in range(nr_conn ** 3):
+
+            # restart the counter
+            break_count = 0
 
             # helper array that contains the walks that are stored
             trial_walk = []
@@ -141,6 +178,13 @@ class Creator:
 
                         # pot_diff = np.around(np.linalg.norm(np.asarray(pot_step) - np.asarray(start)), 1)
                         if pot_step in trial_walk:
+                            # increase break counter
+                            break_count = break_count + 1
+                            # if the break counter excedes a specific number the algorithm cant find a new positon and
+                            # should restart
+                            if break_count > 300:
+                                step = nr_conn + 1
+
                             continue
                         else:
                             trial_walk.append(pot_step)
@@ -153,7 +197,14 @@ class Creator:
 
                         # pot_diff = np.around(np.linalg.norm(np.asarray(pot_step) - np.asarray(start)), 1)
                         if pot_step in trial_walk:
+                            break_count = break_count + 1
+                            # if the break counter excedes a specific number the algorithm cant find a new positon
+                            # should restart
+                            if break_count > 300:
+                                step = nr_conn + 1
+
                             continue
+
                         else:
                             trial_walk.append(pot_step)
                             # diff_array.append(pot_diff)
@@ -167,6 +218,12 @@ class Creator:
 
                         # pot_diff = np.around(np.linalg.norm(np.asarray(pot_step) - np.asarray(start)), 1)
                         if pot_step in trial_walk:
+                            break_count = break_count + 1
+                            # if the break counter excedes a specific number the algorithm cant find a new positon
+                            # and should restart
+                            if break_count > 300:
+                                step = nr_conn + 1
+
                             continue
                         else:
                             trial_walk.append(pot_step)
@@ -179,6 +236,12 @@ class Creator:
 
                         # pot_diff = np.around(np.linalg.norm(np.asarray(pot_step) - np.asarray(start)), 1)
                         if pot_step in trial_walk:
+                            break_count = break_count + 1
+                            # if the break counter excedes a specific number the algorithm cant find a new positon and
+                            # and should restart
+                            if break_count > 300:
+                                step = nr_conn + 1
+
                             continue
                         else:
                             trial_walk.append(pot_step)
@@ -222,7 +285,9 @@ class Creator:
             # sort array for checking if it exists
             diff_array.sort()
 
+            t1 = time.time()
             exists = diff_array in acc_diff
+            t2 = time.time()
 
             if exists == False:
                 structs.append(trial_walk)
@@ -230,7 +295,7 @@ class Creator:
             else:
                 count = count + 1
 
-        print("Fraction that got declined: ", count / (nr_conn ** 5))
+        print("Fraction that got declined: ", count / (nr_conn ** 3))
 
         return structs
 
@@ -249,9 +314,6 @@ class Creator:
 
         # array contianing accepted differences
         acc_diff = []
-
-        # array containing the differences from the starting position
-        diff_array = []
 
         for trial in range(nr_conn ** 5):
 
@@ -297,6 +359,7 @@ class Creator:
                             trial_walk.append(pot_step)
                             # diff_array.append(pot_diff)
                             step = step + 1
+
                 elif random_nr <= 0.6:
                     # go y
                     if random.random() <= 0.5:
@@ -325,7 +388,6 @@ class Creator:
                             step = step + 1
 
                 else:
-
                     random_nr_diag = random.random()
                     # go y
                     if random_nr_diag <= 0.25:
@@ -411,7 +473,7 @@ class Creator:
                     diff_vec_abs = np.abs(np.asarray(vec2) - np.asarray(vec1))
 
                     # next we calculate the total difference
-                    diff_array.append(np.round(np.sqrt(np.sqrt(diff_vec_abs[0] ** 2 + (diff_vec_abs[1] ** 2))), 2))
+                    diff_array.append(np.round(np.sqrt(np.sqrt(diff_vec_abs[0] ** 2 + (diff_vec_abs[1] ** 2))), 4))
 
             # sort array for checking if it exists
             diff_array.sort()
@@ -421,6 +483,11 @@ class Creator:
             if exists == False:
                 structs.append(trial_walk)
                 acc_diff.append(diff_array)
+                #print("-----------------------------------")
+                #print(len(trial_walk))
+                #print(trial_walk)
+                #print(diff_array)
+                #print("------------------------------------")
             else:
                 count = count + 1
 
@@ -543,11 +610,8 @@ class Creator:
         # counter for saving the molecules
         count = 0
 
-        # array containing all the metrics
-        metric_array = []
-
         # function that builds and saves the nanographenes in a folder with the current time in xyz formate
-        for conn in range(8, self.max_number_conon):
+        for conn in range(1, self.max_number_conon):
 
             # get all number of structures for this number of benzol rings
 
@@ -565,6 +629,21 @@ class Creator:
 
                 # derive the positions of the hydrogen atoms based on the coordinates of the carbons
                 hydrogen_positions = self.get_unique_hydrogen_positions(carbon_positions)
+
+                # Next layer of filtering is to create a metric, that if structures hae the same one they get rejected
+                metric = 0
+
+                for c1 in carbon_positions:
+
+                    for c2 in carbon_positions:
+
+                        # calculate the metric for the carbons
+                        metric = metric + np.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2)
+
+                print(metric)
+                print("geometry_" + 'C' + str(len(carbon_positions)) + '_H' + str(len(hydrogen_positions)))
+
+
 
                 # directory checking for even or odd number of electrons
                 if len(hydrogen_positions) % 2 != 0:
@@ -642,8 +721,7 @@ class Creator:
 
                 count = count + 1
 
-    @staticmethod
-    def plot_save_nanographenes(carbon_positions, pic_name, pic_dir):
+    def plot_save_nanographenes(self, carbon_positions, pic_name, pic_dir):
         # Function that plots the benzol rings (carbon atoms) and saves the plot
 
         carbon_positions2D = np.delete(carbon_positions, -1, axis=1)
